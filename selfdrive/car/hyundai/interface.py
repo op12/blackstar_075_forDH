@@ -217,7 +217,7 @@ class CarInterface(CarInterfaceBase):
     #ret.steerMaxBP = [30.*CV.KPH_TO_MS, 60*CV.KPH_TO_MS]
     #ret.steerMaxV = [1.3, 1.8]  
     ret.steerMaxV = [1.3]
-#여기까지 수정부분.
+#여기까지 수정부분. 깃풀시험
 
     ret.centerToFront = ret.wheelbase * 0.4
 
