@@ -76,7 +76,7 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 32 * CV.MPH_TO_MS
     elif candidate == CAR.HYUNDAI_GENESIS:
       ret.lateralTuning.pid.kf = 0.00005
-      ret.mass = 2060. + STD_CARGO_KG
+      ret.mass = 1920. + STD_CARGO_KG
       ret.wheelbase = 3.01
       ret.steerRatio = 16.5
       ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
@@ -195,25 +195,29 @@ class CarInterface(CarInterfaceBase):
 #내 차 lqr 수정부분
     ret.lateralTuning.init('lqr')
     
-    ret.lateralTuning.lqr.scaleBP = [0.]
-    ret.lateralTuning.lqr.scaleV = [1560.0]
+    ret.lateralTuning.lqr.scaleBP = [0.] #DH 는 이값 #처리 아래쪽 스케일 보간 살림.
+    #ret.lateralTuning.lqr.scaleBP = [20.CV.KPH_TO_MS, 40.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS]  
+    #ret.lateralTuning.lqr.scaleV = [2000.0, 1700.0, 1560.0]
+    ret.lateralTuning.lqr.scaleV = [1560.0] #DH 는 이값 #처리 위쪽 스케일 보간 살림.
     ret.lateralTuning.lqr.ki = 0.015
 
     ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
     ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
     ret.lateralTuning.lqr.c = [1., 0.]
-    ret.lateralTuning.lqr.k = [-103., 450.]#neokii님 최근 100을 103으로 바꾸심
+    ret.lateralTuning.lqr.k = [-103., 450.] #neokii님 최근 100을 103으로 바꾸심
     ret.lateralTuning.lqr.l = [0.22, 0.318]
     ret.lateralTuning.lqr.dcGain = 0.003
       
-    ret.steerRatio = 13.5
+    ret.steerRatio = 13.5 #EQ900 12.9, DH 12.0
     ret.steerActuatorDelay = 0.3
     ret.steerRateCost = 0.8
     ret.steerLimitTimer = 1.8    
     
-    ret.steerMaxBP = [30. * CV.KPH_TO_MS, 60 * CV.KPH_TO_MS]
-    ret.steerMaxV = [1.3, 1.8]  
-#여기까지 수정완료.
+    ret.steerMaxBP = [0.]
+    #ret.steerMaxBP = [30.*CV.KPH_TO_MS, 60*CV.KPH_TO_MS]
+    #ret.steerMaxV = [1.3, 1.8]  
+    ret.steerMaxV = [1.3]
+#여기까지 수정부분.
 
     ret.centerToFront = ret.wheelbase * 0.4
 
