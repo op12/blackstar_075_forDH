@@ -76,22 +76,37 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 32 * CV.MPH_TO_MS
     elif candidate == CAR.HYUNDAI_GENESIS:
       ret.lateralTuning.pid.kf = 0.00005
-      ret.mass = 1920. + STD_CARGO_KG
+      ret.mass = 2060. + STD_CARGO_KG
       ret.wheelbase = 3.01
       ret.steerRatio = 16.5
       ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.16], [0.01]]
       ret.minSteerSpeed = 60 * CV.KPH_TO_MS
-      
-#G90, EQ900 무게, 휠베이스, 타이어스티프니스 수정부위(스티어레시오는 아래서 한번에 적용)    
-    elif candidate in [CAR.GENESIS_G90, CAR.GENESIS_G80]:
+    elif candidate in [CAR.GENESIS_G80]:
+      ret.mass = 2200
+      ret.wheelbase = 3.15
+      ret.steerRatio = 12.069
+      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.16], [0.01]]
+    
+    elif candidate in [CAR.GENESIS_G90]:
+      tire_stiffness_factor = 0.9
       ret.mass = 2290. + STD_CARGO_KG
       ret.wheelbase = 3.45
-      ret.steerRatio = 13.5
-      tire_stiffness_factor = 0.385
-      #ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
-      #ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.16], [0.01]]
-      
+      ret.steerRatio = 13.7
+      ret.steerActuatorDelay = 0.3
+      ret.steerRateCost = 0.5
+      ret.steerLimitTimer = 2.0
+      ret.lateralTuning.init('lqr')
+      ret.lateralTuning.lqr.scale = 1580.0
+      ret.lateralTuning.lqr.ki = 0.01
+      ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
+      ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
+      ret.lateralTuning.lqr.c = [1., 0.]
+      ret.lateralTuning.lqr.k = [-100., 450.]
+      ret.lateralTuning.lqr.l = [0.22, 0.318]
+      ret.lateralTuning.lqr.dcGain = 0.003
+    
     elif candidate in [CAR.KIA_OPTIMA, CAR.KIA_OPTIMA_H]:
       ret.lateralTuning.pid.kf = 0.00005
       ret.mass = 3558. * CV.LB_TO_KG
@@ -181,43 +196,37 @@ class CarInterface(CarInterfaceBase):
       tire_stiffness_factor = 0.6
       ret.mass = 1640. + STD_CARGO_KG
       ret.wheelbase = 2.845
-      ret.steerRatio = 14.4 * 1.1   # 10% higher at the center seems reasonable
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
+      ret.lateralTuning.init('lqr')
+      ret.lateralTuning.lqr.scale = 2000.0
+      ret.lateralTuning.lqr.ki = 0.01
+      ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
+      ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
+      ret.lateralTuning.lqr.c = [1., 0.]
+      ret.lateralTuning.lqr.k = [-100., 450.]
+      ret.lateralTuning.lqr.l = [0.22, 0.318]
+      ret.lateralTuning.lqr.dcGain = 0.003
+      ret.steerRatio = 13.7
+      ret.steerActuatorDelay = 0.3
+      ret.steerRateCost = 0.5
+      ret.steerLimitTimer = 0.8
+
     elif candidate == CAR.K7_HYBRID:
       tire_stiffness_factor = 0.9
       ret.mass = 1685. + STD_CARGO_KG
       ret.wheelbase = 2.885
       ret.steerRatio = 13.7
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
-     
-#내 차 lqr 수정부분
-    ret.lateralTuning.init('lqr')
-    
-    ret.lateralTuning.lqr.scaleBP = [0.] #DH 는 이값 #처리 아래쪽 스케일 보간 살림.
-    #ret.lateralTuning.lqr.scaleBP = [20.CV.KPH_TO_MS, 40.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS]  
-    #ret.lateralTuning.lqr.scaleV = [2000.0, 1700.0, 1560.0]
-    ret.lateralTuning.lqr.scaleV = [1560.0] #DH 는 이값 #처리 위쪽 스케일 보간 살림.
-    ret.lateralTuning.lqr.ki = 0.015
-
-    ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
-    ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
-    ret.lateralTuning.lqr.c = [1., 0.]
-    ret.lateralTuning.lqr.k = [-100., 450.] #neokii님 최근 100을 103으로 바꾸심
-    ret.lateralTuning.lqr.l = [0.22, 0.318]
-    ret.lateralTuning.lqr.dcGain = 0.003
-      
-    ret.steerRatio = 13.5 #EQ900 12.9, DH 12.0
-    ret.steerActuatorDelay = 0.3
-    ret.steerRateCost = 0.8
-    ret.steerLimitTimer = 1.8    
-    
-    ret.steerMaxBP = [0.]
-    #ret.steerMaxBP = [30.*CV.KPH_TO_MS, 60*CV.KPH_TO_MS]
-    #ret.steerMaxV = [1.3, 1.8]  
-    ret.steerMaxV = [1.3]
-#여기까지 수정부분. 깃풀시험
+      ret.steerActuatorDelay = 0.3
+      ret.steerRateCost = 0.5
+      ret.steerLimitTimer = 0.6
+      ret.lateralTuning.init('lqr')
+      ret.lateralTuning.lqr.scale = 2000.0
+      ret.lateralTuning.lqr.ki = 0.03
+      ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
+      ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
+      ret.lateralTuning.lqr.c = [1., 0.]
+      ret.lateralTuning.lqr.k = [-100., 450.]
+      ret.lateralTuning.lqr.l = [0.22, 0.318]
+      ret.lateralTuning.lqr.dcGain = 0.003
 
     ret.centerToFront = ret.wheelbase * 0.4
 
@@ -244,7 +253,8 @@ class CarInterface(CarInterfaceBase):
 
 
     # steer, gas, brake limitations VS speed
-    
+    ret.steerMaxBP = [0.]
+    ret.steerMaxV = [1.5]
     ret.gasMaxBP = [0.]
     ret.gasMaxV = [0.5]
     ret.brakeMaxBP = [0., 20.]
