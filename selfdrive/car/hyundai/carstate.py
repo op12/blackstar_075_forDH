@@ -155,16 +155,6 @@ class CarState(CarStateBase):
     self.left_blinker_flash = cp.vl["CGW1"]['CF_Gway_TurnSigLh']
     self.right_blinker_flash = cp.vl["CGW1"]['CF_Gway_TurnSigRh']
 
-#깜박이 추가부분 시작
-    if not ret.leftBlinker and not ret.rightBlinker:
-
-      if self.left_blinker_flash:
-        ret.leftBliker = self.left_blinker_flash
-      
-      if self.right_blinker_flash:
-        ret.rightBliker = self.right_blinker_flash
-#깜박이 추가부분 종료
-
     return ret
 
   @staticmethod
