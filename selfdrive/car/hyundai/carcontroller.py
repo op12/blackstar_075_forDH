@@ -70,7 +70,6 @@ class CarController():
     self.turning_signal_timer = 0
     self.lkas_button_on = True
     self.longcontrol = False #TODO: make auto
-    self.flashBlinker = False
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, visual_alert,
              left_lane, right_lane, left_lane_depart, right_lane_depart):
@@ -90,8 +89,8 @@ class CarController():
 
     # disable if steer angle reach 90 deg, otherwise mdps fault in some models
     # temporarily disable steering when LKAS button off 
-    lkas_active = enabled and abs(CS.out.steeringAngle) < 90. and self.lkas_button_on
-    # lkas_active = enabled and self.lkas_button_on
+    # lkas_active = enabled and abs(CS.out.steeringAngle) < 90. and self.lkas_button_on
+    lkas_active = enabled and self.lkas_button_on
 
     # fix for Genesis hard fault at low speed
     if CS.out.vEgo < 60 * CV.KPH_TO_MS and self.car_fingerprint == CAR.HYUNDAI_GENESIS and not CS.mdps_bus:
@@ -151,8 +150,7 @@ class CarController():
     if CS.scc_bus and self.longcontrol and frame % 2: # send scc12 to car if SCC not on bus 0 and longcontrol enabled
       can_sends.append(create_scc12(self.packer, apply_accel, enabled, self.scc12_cnt, CS.scc12))
       self.scc12_cnt += 1
-      
-      #네오키님꺼로 변경
+
     if CS.out.cruiseState.standstill:
       # run only first time when the car stopped
       if self.last_lead_distance == 0:
@@ -160,43 +158,17 @@ class CarController():
         self.last_lead_distance = CS.lead_distance
         self.resume_cnt = 0
       # when lead car starts moving, create 6 RES msgs
-      elif CS.lead_distance != self.last_lead_distance and (frame - self.last_resume_frame) > 5:
+      elif self.last_lead_distance < CS.lead_distance > 4.8 and (frame - self.last_resume_frame) > 5:
         can_sends.append(create_clu11(self.packer, frame, CS.scc_bus, CS.clu11, Buttons.RES_ACCEL, clu11_speed))
         self.resume_cnt += 1
         # interval after 6 msgs
         if self.resume_cnt > 5:
           self.last_resume_frame = frame
           self.clu11_cnt = 0
+
     # reset lead distnce after the car starts moving
     elif self.last_lead_distance != 0:
-      self.last_lead_distance = 0  
- 
-#네오키님꺼 끝
-  #검은별님꺼에서 삭제1 elif CS.mdps_bus: # send mdps12 to LKAS to prevent LKAS error if no cancel cmd
-      #2can_sends.append(create_mdps12(self.packer, frame, CS.mdps12))
-
-    #3if CS.scc_bus and self.longcontrol and frame % 2: # send scc12 to car if SCC not on bus 0 and longcontrol enabled
-      #4can_sends.append(create_scc12(self.packer, apply_accel, enabled, self.scc12_cnt, CS.scc12))
-      #5self.scc12_cnt += 1
-
-   #수정필요 elif CS.out.cruiseState.standstill:
-      # run only first time when the car stopped
-      #6if self.last_lead_distance == 0:
-        # get the lead distance from the Radar
-        #7self.last_lead_distance = CS.lead_distance
-        #8self.resume_cnt = 0
-      # when lead car starts moving, create 6 RES msgs
-#14      if CS.lead_distance > 4.8 and (frame - self.last_resume_frame)*DT_CTRL > 0.2: #> 5:
-   #15     can_sends.append(create_clu11(self.packer, frame, CS.scc_bus, CS.clu11, Buttons.RES_ACCEL, clu11_speed))
-        #9self.resume_cnt += 1
-        # interval after 6 msgs
-        #10if self.resume_cnt > 5:
- #16       self.last_resume_frame = frame
-          #11self.clu11_cnt = 0
-
-    # reset lead distnce after the car starts moving
-   #12 elif self.last_lead_distance != 0:
-     #13 self.last_lead_distance = 0
+      self.last_lead_distance = 0
 
     # 20 Hz LFA MFA message
     if frame % 5 == 0 and self.car_fingerprint in [CAR.SONATA, CAR.PALISADE, CAR.SONATA_H, CAR.SANTA_FE]:
