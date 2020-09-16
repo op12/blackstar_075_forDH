@@ -145,44 +145,59 @@ class CarController():
 
     if pcm_cancel_cmd and self.longcontrol:
       can_sends.append(create_clu11(self.packer, frame, CS.scc_bus, CS.clu11, Buttons.CANCEL, clu11_speed))
-    #검은별님꺼에서 삭제1 elif CS.mdps_bus: # send mdps12 to LKAS to prevent LKAS error if no cancel cmd
+    elif CS.mdps_bus: # send mdps12 to LKAS to prevent LKAS error if no cancel cmd
+      can_sends.append(create_mdps12(self.packer, frame, CS.mdps12))
+
+    if CS.scc_bus and self.longcontrol and frame % 2: # send scc12 to car if SCC not on bus 0 and longcontrol enabled
+      can_sends.append(create_scc12(self.packer, apply_accel, enabled, self.scc12_cnt, CS.scc12))
+      self.scc12_cnt += 1
+      
+      #네오키님꺼로 변경
+    if CS.out.cruiseState.standstill:
+      # run only first time when the car stopped
+      if self.last_lead_distance == 0:
+        # get the lead distance from the Radar
+        self.last_lead_distance = CS.lead_distance
+        self.resume_cnt = 0
+      # when lead car starts moving, create 6 RES msgs
+      elif CS.lead_distance != self.last_lead_distance and (frame - self.last_resume_frame) > 5:
+        can_sends.append(create_clu11(self.packer, frame, CS.scc_bus, CS.clu11, Buttons.RES_ACCEL, clu11_speed))
+        self.resume_cnt += 1
+        # interval after 6 msgs
+        if self.resume_cnt > 5:
+          self.last_resume_frame = frame
+          self.clu11_cnt = 0
+    # reset lead distnce after the car starts moving
+    elif self.last_lead_distance != 0:
+      self.last_lead_distance = 0  
+ 
+#네오키님꺼 끝
+  #검은별님꺼에서 삭제1 elif CS.mdps_bus: # send mdps12 to LKAS to prevent LKAS error if no cancel cmd
       #2can_sends.append(create_mdps12(self.packer, frame, CS.mdps12))
 
     #3if CS.scc_bus and self.longcontrol and frame % 2: # send scc12 to car if SCC not on bus 0 and longcontrol enabled
       #4can_sends.append(create_scc12(self.packer, apply_accel, enabled, self.scc12_cnt, CS.scc12))
       #5self.scc12_cnt += 1
 
-    elif CS.out.cruiseState.standstill:
+   #수정필요 elif CS.out.cruiseState.standstill:
       # run only first time when the car stopped
       #6if self.last_lead_distance == 0:
         # get the lead distance from the Radar
         #7self.last_lead_distance = CS.lead_distance
         #8self.resume_cnt = 0
       # when lead car starts moving, create 6 RES msgs
-      if CS.lead_distance > 4.8 and (frame - self.last_resume_frame)*DT_CTRL > 0.2: #> 5:
-        can_sends.append(create_clu11(self.packer, frame, CS.scc_bus, CS.clu11, Buttons.RES_ACCEL, clu11_speed))
+#14      if CS.lead_distance > 4.8 and (frame - self.last_resume_frame)*DT_CTRL > 0.2: #> 5:
+   #15     can_sends.append(create_clu11(self.packer, frame, CS.scc_bus, CS.clu11, Buttons.RES_ACCEL, clu11_speed))
         #9self.resume_cnt += 1
         # interval after 6 msgs
         #10if self.resume_cnt > 5:
-        self.last_resume_frame = frame
+ #16       self.last_resume_frame = frame
           #11self.clu11_cnt = 0
 
     # reset lead distnce after the car starts moving
    #12 elif self.last_lead_distance != 0:
      #13 self.last_lead_distance = 0
-#아래부터 추가
-    if CS.mdps_bus:  # send mdps12 to LKAS to prevent LKAS error
-      can_sends.append(create_mdps12(self.packer, frame, CS.mdps12))
 
-    # send scc to car if longcontrol enabled and SCC not on bus 0 or ont live
-    if self.longcontrol and (CS.scc_bus or not self.scc_live) and frame % 2 == 0:
-      can_sends.append(create_scc12(self.packer, apply_accel, enabled, self.scc12_cnt, self.scc_live, CS.scc12))
-      can_sends.append(create_scc11(self.packer, frame, enabled, set_speed, lead_visible, self.scc_live, CS.scc11))
-      if CS.has_scc13 and frame % 20 == 0:
-        can_sends.append(create_scc13(self.packer, CS.scc13))
-      if CS.has_scc14:
-        can_sends.append(create_scc14(self.packer, enabled, CS.scc14))
-      self.scc12_cnt += 1
     # 20 Hz LFA MFA message
     if frame % 5 == 0 and self.car_fingerprint in [CAR.SONATA, CAR.PALISADE, CAR.SONATA_H, CAR.SANTA_FE]:
       can_sends.append(create_lfa_mfa(self.packer, frame, enabled))
