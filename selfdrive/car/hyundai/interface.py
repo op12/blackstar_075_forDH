@@ -81,7 +81,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 12.0
       ret.steerActuatorDelay = 0.3
       ret.steerRateCost = 0.55
-      ret.steerLimitTimer = 2.0
+      ret.steerLimitTimer = 2.5
       
       ret.lateralTuning.init('lqr')
       ret.lateralTuning.lqr.scale = 1580.0
